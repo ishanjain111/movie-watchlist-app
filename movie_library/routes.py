@@ -1,6 +1,9 @@
-from flask import Blueprint, render_template, session, redirect, request, flash, url_for
+from flask import Blueprint, render_template, session, redirect, request, flash, url_for, current_app
 from movie_library.form import MovieForm
-import requests
+import requests, uuid
+from movie_library.models import Movie
+from dataclasses import asdict
+
 
 
 pages = Blueprint(
@@ -10,28 +13,39 @@ pages = Blueprint(
 
 @pages.route("/")
 def index():
+    movie_data = current_app.db.movie_details.find({})
+    movies = [Movie(**movie) for movie in movie_data]
     return render_template(
         "index.html",
         title="Movies Watchlist",
+        movies_data=movies
     )
 
 @pages.route("/add", methods=["GET", "POST"])
 def add_movie():
     form = MovieForm()
-    if request.method == "POST":
+    if form.validate_on_submit():
         movie_name = form.title.data
-        api_url = f"https://www.omdbapi.com/?t={movie_name}&apikey=******"
+        api_url = f"https://www.omdbapi.com/?t={movie_name}&apikey=ddd3c2a0"
         response = requests.get(api_url)
         if response.status_code == 200:
+            
             movie_data = response.json()
             if movie_data['Response'] == 'True':
-                cast = movie_data.get('Actors', 'N/A')
-                director = movie_data.get('Director', 'N/A')
-                imdb_rating = movie_data.get('imdbRating', 'N/A')
-                release_date = movie_data.get('Released','N/A')
-                genre = movie_data.get('Genre','N/A')
-                runtime = movie_data.get('Runtime','N/A')
-
+                movie = Movie(
+                    _id = uuid.uuid4().hex,
+                    title = movie_name,
+                    director = movie_data.get('Director', 'N/A'),
+                    cast =  movie_data.get('Actors', 'N/A'),
+                    imdb_rating = movie_data.get('imdbRating', 'N/A'),
+                    release_date =  movie_data.get('Released','N/A'),
+                    genre = movie_data.get('Genre','N/A'),
+                    runtime = movie_data.get('Runtime','N/A'),
+                    plot = movie_data.get('Plot','N/A'),
+                    rated = movie_data.get('Rated','N/A'),
+                    poster_url = movie_data.get('Poster','N/A')
+                )
+                current_app.db.movie_details.insert_one(asdict(movie))             
                 flash(f"Movie Added, Successfully!", 'success')
                 return redirect(url_for('pages.add_movie'))
             else:
@@ -41,8 +55,26 @@ def add_movie():
         else:
             flash(f"Error: Unable to fetch data from OMDb API. Status code: {response.status_code}", 'danger')
             return redirect(url_for('pages.add_movie'))
+        
+    
             
     return render_template("new_movie.html", title="Movies Watchlist -- Add Movie", form=form)
+
+
+@pages.get("/movie/<string:_id>")
+def movie(_id: str):
+    movie_data = current_app.db.movie_details.find_one({"_id": _id})
+    if movie_data is not None:
+        movie = Movie(**movie_data)
+        return render_template("movie_details.html", movie=movie)
+    else:
+        flash("Movie not found", "danger")
+        return redirect(url_for('pages.index'))
+
+@pages.route("/delete/<string:_id>", methods=["POST"])
+def delete_movie(_id: str):
+    current_app.db.movie_details.delete_one({"_id": _id})
+    return redirect(url_for('pages.index'))
 
 @pages.get("/toggel-theme")
 def toggle_theme():
