@@ -73,9 +73,8 @@
   font-size: 1.2rem;
 }
 
-
 body {
-  margin: 32px;
+  margin: 0;
 }
 
 .btn {
@@ -88,39 +87,71 @@ body {
   letter-spacing: .25px;
   border-radius: 24px;
   cursor: pointer;
-  
-  &:focus {
-    outline: none;
-  }
-  
-  .mdi {
-    margin-right: 8px;
-  }
+}
+
+.btn:focus {
+  outline: none;
+}
+
+.btn .mdi {
+  margin-right: 8px;
 }
 
 .btn-delete {
   font-size: 16px;
   color: red;
-  
-  >.mdi-delete-empty {
-    display: none;
-  }
-  
-  &:hover {
-    background-color: lighten(red, 48%);
-    
-    >.mdi-delete-empty {
-      display: block;
-    }
-    
-    >.mdi-delete {
-      display: none;
-    }
-  }
-  
+}
 
-  
-  &:focus {
-    box-shadow: 0 0 0 4px lighten(red, 40%);
+.btn-delete > .mdi-delete-empty {
+  display: none;
+}
+
+.btn-delete:hover {
+  background-color: lighten(red, 48%);
+}
+
+.btn-delete:hover > .mdi-delete-empty {
+  display: block;
+}
+
+.btn-delete:hover > .mdi-delete {
+  display: none;
+}
+
+.btn-delete:focus {
+  box-shadow: 0 0 0 4px lighten(red, 40%);
+}
+
+@media screen and (max-width: 600px) {
+  .table__cell {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .table__cell--header {
+    padding: 0.5rem 0.5rem;
+  }
+
+  .table__movieTitle {
+    font-size: 0.95rem;
+  }
+
+  .table__movieDirector {
+    font-size: 0.75rem;
+  }
+
+  .btn {
+    height: 40px;
+    padding: 0 16px 0 12px;
+    font-size: 0.9rem;
+  }
+
+  .btn .mdi {
+    margin-right: 4px;
+  }
+}
+
+@media screen and (min-width: 601px) and (max-width: 1200px) {
+  .table {
+    max-width: 80%;
   }
 }

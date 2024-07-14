@@ -4,17 +4,30 @@ import requests, uuid
 from movie_library.models import Movie, User
 from passlib.hash import pbkdf2_sha256
 from dataclasses import asdict
-
+import functools
 
 
 pages = Blueprint(
     "pages", __name__, template_folder="templates", static_folder="static"
 )
 
+def login_required(route):
+    @functools.wraps(route)
+    def route_wrapper(*args, **kwargs):
+        if session.get("email") is None:
+            return redirect(url_for(".login"))
+
+        return route(*args, **kwargs)
+
+    return route_wrapper
+
 
 @pages.route("/")
+@login_required
 def index():
-    movie_data = current_app.db.movie_details.find({})
+    user_data = current_app.db.user.find_one({"email": session["email"]})
+    user = User(**user_data)
+    movie_data = current_app.db.movie_details.find({"_id": {"$in": user.movies}})
     movies = [Movie(**movie) for movie in movie_data]
     return render_template(
         "index.html",
@@ -62,11 +75,12 @@ def login():
     return render_template("login.html", title="Movies Watchlist - Login", form=form)
 
 @pages.route("/add", methods=["GET", "POST"])
+@login_required
 def add_movie():
     form = MovieForm()
     if form.validate_on_submit():
         movie_name = form.title.data
-        api_url = f"https://www.omdbapi.com/?t={movie_name}&apikey=ddd3c2a0"
+        api_url = f"https://www.omdbapi.com/?t={movie_name}&apikey=*******"
         response = requests.get(api_url)
         if response.status_code == 200:
             
@@ -85,7 +99,10 @@ def add_movie():
                     rated = movie_data.get('Rated','N/A'),
                     poster_url = movie_data.get('Poster','N/A')
                 )
-                current_app.db.movie_details.insert_one(asdict(movie))             
+                current_app.db.movie_details.insert_one(asdict(movie))     
+                current_app.db.user.update_one(
+                    {"_id": session["user_id"]}, {"$push": {"movies": movie._id}}
+                )        
                 flash(f"Movie Added, Successfully!", 'success')
                 return redirect(url_for('pages.add_movie'))
             else:
@@ -102,6 +119,7 @@ def add_movie():
 
 
 @pages.get("/movie/<string:_id>")
+@login_required
 def movie(_id: str):
     movie_data = current_app.db.movie_details.find_one({"_id": _id})
     if movie_data is not None:
@@ -125,3 +143,11 @@ def toggle_theme():
         session["theme"] = "dark"
     
     return redirect(request.args.get("current_page"))
+
+@pages.route("/logout")
+def logout():
+    current_theme = session.get("theme")
+    session.clear()
+    session["theme"] = current_theme
+
+    return redirect(url_for(".login"))
