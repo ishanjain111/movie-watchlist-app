@@ -14,3 +14,10 @@ class Movie:
     plot: str
     rated: str
     poster_url: str
+
+@dataclass
+class User:
+    _id: str
+    email: str
+    password: str
+    movies: list[str] = field(default_factory=list)

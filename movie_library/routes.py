@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, session, redirect, request, flash, url_for, current_app
-from movie_library.form import MovieForm
+from movie_library.form import MovieForm, RegisterForm, LoginForm
 import requests, uuid
-from movie_library.models import Movie
+from movie_library.models import Movie, User
+from passlib.hash import pbkdf2_sha256
 from dataclasses import asdict
 
 
@@ -20,6 +21,45 @@ def index():
         title="Movies Watchlist",
         movies_data=movies
     )
+
+@pages.route("/register", methods=["GET","POST"])
+def register():
+    if session.get("email"):
+        return redirect(url_for("pages.index"))
+    form = RegisterForm()
+    if form.validate_on_submit():
+        user = User(
+            _id=uuid.uuid4().hex,
+            email=form.email.data,
+            password=pbkdf2_sha256.hash(form.password.data),
+        )
+        current_app.db.user.insert_one(asdict(user))
+        flash("User registered successfully", "success")
+        return redirect(url_for("pages.login"))
+
+    return render_template("register.html", title="Movie Watchlist - Register", form=form)
+
+@pages.route("/login", methods=["GET", "POST"])
+def login():
+    if session.get("email"):
+        return redirect(url_for("pages.index"))
+    
+    form = LoginForm()
+    if form.validate_on_submit():
+        user_data = current_app.db.user.find_one({"email": form.email.data})
+        if not user_data:
+            flash("Login credentials not correct", category="danger")
+            return redirect(url_for("pages.login"))
+        user = User(**user_data)
+
+        if user and pbkdf2_sha256.verify(form.password.data, user.password):
+            session["user_id"] = user._id
+            session["email"] = user.email
+
+            return redirect(url_for("pages.index"))
+        
+        flash("Login credentials not correct", category="danger")
+    return render_template("login.html", title="Movies Watchlist - Login", form=form)
 
 @pages.route("/add", methods=["GET", "POST"])
 def add_movie():

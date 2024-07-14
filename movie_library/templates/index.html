@@ -5,17 +5,19 @@
 {% endblock %}
 
 {% block main_content %}
-    {% if movies_data %}
+
+    {%- if movies_data %}
         <table class="table">
             <colgroup>
-                <col style="width: 55%">
-                <col style="width: 20%">
+                <col style="width: 60%">
                 <col style="width: 25%">
+                <col style="width: 15%">
             </colgroup>
             <thead>
                 <tr class="table__header">
                     <th class="table__cell table__cell--header">Title</th>
                     <th class="table__cell table__cell--header">Release Date</th>
+                    <th class="table__cell table__cell--header"></th>
                     <th class="table__cell table__cell--header"></th>
                 </tr>
             </thead>
@@ -27,18 +29,27 @@
                             <p class="table__movieDirector">By {{ movie.director }}</p>
                         </td>
                         <td class="table__cell">{{ movie.release_date }}</td>
-                        <td class="table__cell table__actions">
-                            <a href="{{ url_for('pages.movie', _id=movie._id) }}" class="table__button">View</a>
-                            <form action="{{ url_for('pages.delete_movie', _id=movie._id) }}" method="post" class="delete-form">
-                                <button type="submit" class="table__button">Delete</button>
+                        <td class="table__cell"><a href="{{ url_for('pages.movie', _id=movie._id) }}" class="table__link">View</a></td>
+                        <td class="table__cell">
+                            <form action="{{ url_for('pages.delete_movie', _id=movie._id) }}" method="post" class="table__link">
+                                <button type="submit" class="btn btn-delete">
+                                    <span class="mdi mdi-delete mdi-24px"></span>
+                                    <span class="mdi mdi-delete-empty mdi-24px"></span>
+                                    <span>Delete</span>
+                                </button>
                             </form>
                         </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
+        
     {% else %}
         <p class="table__empty">You haven't added any movies yet. <a href="{{ url_for('pages.add_movie') }}" class="link">Add one!</a></p>
     {% endif %}
-    <a href="{{ url_for('pages.add_movie') }}" class="button--add">+</a>
+
+    <a href="{{ url_for('pages.add_movie') }}" class="button button--add">
+        <span>+</span>
+    </a>
+
 {% endblock %}
