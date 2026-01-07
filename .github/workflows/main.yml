@@ -1,0 +1,35 @@
+name: Sync GitHub to Gitea
+
+on:
+  push:
+    branches:
+      - '**'  # Matches any branch
+  schedule:
+    - cron: '0 * * * *'  # Sync every hour (adjust as needed)
+  workflow_dispatch:   # Manually trigger the workflow
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the GitHub repository
+      uses: actions/checkout@v3
+
+    - name: Set up Git configuration
+      run: |
+        git config --global user.email "ishan.jain@impetus.com"
+        git config --global user.name "ishan.jain"
+    
+    - name: Add Gitea remote
+      run: |
+        git remote add gitea https://ishan.jain:${{ secrets.GITEA_TOKEN }}@https://gitea.com/ishan.jain/test-repo.git
+        git fetch gitea
+    
+    - name: Push to Gitea
+      run: |
+        git push gitea ${{ github.ref_name }} --force  # Sync the correct branch
+    
+    - name: Clean up
+      run: |
+        git remote remove gitea
