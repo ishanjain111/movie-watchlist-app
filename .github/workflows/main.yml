@@ -23,7 +23,7 @@ jobs:
     
     - name: Add Gitea remote
       run: |
-        git remote add gitea https://ishan.jain:${{ secrets.GITEA_TOKEN }}@https://gitea.com/ishan.jain/test-repo.git
+        git remote add gitea https://ishan.jain:${{ secrets.GITEA_TOKEN }}@gitea.com/ishan.jain/test-repo.git
         git fetch gitea
     
     - name: Push to Gitea
