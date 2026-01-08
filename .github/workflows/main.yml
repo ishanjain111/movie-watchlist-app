@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - '**'  # Matches any branch
-  schedule:
-    - cron: '0 * * * *'  # Sync every hour (adjust as needed)
+  # schedule:
+  #   - cron: '0 * * * *'  # Sync every hour (adjust as needed)
   workflow_dispatch:   # Manually trigger the workflow
 
 jobs:
